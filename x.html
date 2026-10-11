@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusMind AI — Супер Интеллект & Мультимедиа Ядро</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#040408',
+                            card: '#0a0a16',
+                            border: '#1f1f3a',
+                            neonGreen: '#00ffcc',
+                            neonCyan: '#00e5ff',
+                            neonPurple: '#bd00ff',
+                            neonPink: '#ff007f'
+                        }
+                    },
+                    boxShadow: {
+                        'neon-green': '0 0 20px rgba(0, 255, 204, 0.3)',
+                        'neon-cyan': '0 0 20px rgba(0, 229, 255, 0.3)',
+                        'neon-purple': '0 0 20px rgba(189, 0, 255, 0.3)',
+                        'neon-glow': '0 0 30px rgba(0, 255, 204, 0.2)'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #040408; color: #e2e8f0; overflow-x: hidden; }
+        .font-cyber { font-family: 'Orbitron', sans-serif; }
+        .font-code { font-family: 'Fira Code', monospace; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #040408; }
+        ::-webkit-scrollbar-thumb { background: #1f1f3a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00ffcc; }
+        .glass-panel {
+            background: rgba(10, 10, 22, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(31, 31, 58, 0.8);
+        }
+        .cyber-button { position: relative; transition: all 0.3s ease; }
+        .cyber-button::before {
+            content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px;
+            background: linear-gradient(45deg, #00ffcc, #bd00ff);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; opacity: 0.7;
+        }
+        .cyber-button:hover::before { opacity: 1; }
+        .chat-rendered-code {
+            background: #020205; border: 1px solid #1f1f3a; border-radius: 8px; padding: 12px;
+            font-family: 'Fira Code', monospace; font-size: 13px; white-space: pre-wrap;
+            overflow-x: auto; color: #00ffcc; word-break: break-word;
+        }
+        .inline-code {
+            background: #020205; border: 1px solid #1f1f3a; border-radius: 4px; padding: 1px 5px;
+            font-family: 'Fira Code', monospace; font-size: 12px; color: #00ffcc;
+        }
+        .msg-in { animation: msgIn .25s ease-out; }
+        @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        .typing-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#00ffcc; margin-right:3px; animation: blink 1s infinite; }
+        .typing-dot:nth-child(2){ animation-delay:.2s } .typing-dot:nth-child(3){ animation-delay:.4s }
+        @keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+        .mini-btn {
+            font-family: 'Fira Code', monospace; font-size: 11px; padding: 4px 10px; border-radius: 8px;
+            background: #0a0a16; border: 1px solid #1f1f3a; color: #cbd5e1; transition: all .2s;
+        }
+        .mini-btn:hover { border-color: #00ffcc; color: #00ffcc; }
+        textarea#chatInput { resize: none; }
+        @media (prefers-reduced-motion: reduce) { * { animation-duration: .001s !important; } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative selection:bg-cyber-neonGreen selection:text-black">
+
+    <canvas id="neuralCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+
+    <!-- Header -->
+    <header class="relative z-10 glass-panel border-b border-cyber-border px-4 md:px-6 py-4 flex items-center justify-between flex-wrap gap-4">
+        <div class="flex items-center space-x-3">
+            <div class="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-cyber-neonGreen to-cyber-neonPurple p-0.5 shadow-neon-green">
+                <div class="w-full h-full bg-cyber-bg rounded-[10px] flex items-center justify-center">
+                    <i data-lucide="cpu" class="w-5 h-5 text-cyber-neonGreen animate-pulse"></i>
+                </div>
+            </div>
+            <div>
+                <h1 class="font-cyber font-extrabold text-lg md:text-xl tracking-wider bg-gradient-to-r from-cyber-neonGreen via-cyber-neonCyan to-cyber-neonPurple bg-clip-text text-transparent">
+                    NEXUSMIND <span class="text-xs px-2 py-0.5 rounded bg-cyber-neonGreen/10 text-cyber-neonGreen border border-cyber-neonGreen/30 ml-2">v7.0</span>
+                </h1>
+                <p class="text-xs text-slate-400 font-code">Чат, код, картинки, 3D и видео-сцены</p>
+            </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2 text-xs font-code">
+            <div class="hidden lg:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border">
+                <span id="keyDot" class="w-2 h-2 rounded-full bg-rose-500"></span>
+                <span class="text-slate-400">МОДЕЛЬ:</span>
+                <span id="modelLabel" class="text-cyber-neonGreen font-bold"></span>
+            </div>
+            <button onclick="openSettings()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border hover:border-cyber-neonCyan text-slate-300 transition-all" title="Настройки и API-ключ">
+                <i data-lucide="settings" class="w-4 h-4 text-cyber-neonCyan"></i>
+                <span class="hidden sm:inline">Настройки</span>
+            </button>
+            <button id="audioToggleBtn" onclick="toggleAudio()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border hover:border-cyber-neonGreen text-slate-300 transition-all">
+                <span id="audioIconWrap"><i data-lucide="volume-2" class="w-4 h-4 text-cyber-neonGreen"></i></span>
+                <span id="audioText" class="hidden sm:inline">Звук: ВКЛ</span>
+            </button>
+            <button onclick="exportChat()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border hover:border-cyber-neonPurple text-slate-300 transition-all" title="Скачать чат в .md">
+                <i data-lucide="download" class="w-4 h-4 text-cyber-neonPurple"></i>
+                <span class="hidden sm:inline">Экспорт</span>
+            </button>
+            <button onclick="triggerGlobalReset()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 transition-all">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Сброс</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="relative z-10 flex-1 max-w-[1700px] w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Sidebar -->
+        <div class="order-2 lg:order-1 lg:col-span-3 flex flex-col space-y-6">
+
+            <div class="glass-panel rounded-2xl p-5 shadow-xl flex flex-col space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-cyber-border">
+                    <h2 class="font-cyber font-semibold text-sm tracking-wide text-cyber-neonGreen flex items-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i> Команды генерации
+                    </h2>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="setPromptPrefix('/image ')" class="p-2.5 rounded-xl bg-cyber-card hover:bg-cyber-neonGreen/10 border border-cyber-border hover:border-cyber-neonGreen text-left transition-all">
+                        <div class="flex items-center space-x-2 text-cyber-neonGreen text-xs font-bold font-cyber"><i data-lucide="image" class="w-4 h-4"></i><span>Картинка</span></div>
+                        <div class="text-[10px] text-slate-400 mt-1">/image [описание]</div>
+                    </button>
+                    <button onclick="setPromptPrefix('/3d ')" class="p-2.5 rounded-xl bg-cyber-card hover:bg-cyber-neonCyan/10 border border-cyber-border hover:border-cyber-neonCyan text-left transition-all">
+                        <div class="flex items-center space-x-2 text-cyber-neonCyan text-xs font-bold font-cyber"><i data-lucide="box" class="w-4 h-4"></i><span>3D Модель</span></div>
+                        <div class="text-[10px] text-slate-400 mt-1">/3d [объект]</div>
+                    </button>
+                    <button onclick="setPromptPrefix('/code ')" class="p-2.5 rounded-xl bg-cyber-card hover:bg-cyber-neonPurple/10 border border-cyber-border hover:border-cyber-neonPurple text-left transition-all">
+                        <div class="flex items-center space-x-2 text-cyber-neonPurple text-xs font-bold font-cyber"><i data-lucide="code" class="w-4 h-4"></i><span>Код</span></div>
+                        <div class="text-[10px] text-slate-400 mt-1">/code [задача]</div>
+                    </button>
+                    <button onclick="setPromptPrefix('/video ')" class="p-2.5 rounded-xl bg-cyber-card hover:bg-cyber-neonPink/10 border border-cyber-border hover:border-cyber-neonPink text-left transition-all">
+                        <div class="flex items-center space-x-2 text-cyber-neonPink text-xs font-bold font-cyber"><i data-lucide="video" class="w-4 h-4"></i><span>Видео</span></div>
+                        <div class="text-[10px] text-slate-400 mt-1">/video [сцена]</div>
+                    </button>
+                </div>
+                <div class="text-[10px] text-slate-500 font-code leading-relaxed">
+                    3D: машина, дом, дерево, ракета, робот, планета, куб, пирамида, тор, звезда.<br>
+                    Видео: дождь/неон, космос, огонь, океан.
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-5 shadow-xl flex flex-col space-y-5">
+                <div class="flex items-center justify-between pb-3 border-b border-cyber-border">
+                    <h2 class="font-cyber font-semibold text-sm tracking-wide text-cyber-neonCyan flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-4 h-4"></i> Параметры
+                    </h2>
+                </div>
+                <div class="space-y-2">
+                    <div class="flex justify-between text-xs font-code">
+                        <span class="text-slate-300">Скорость анимаций</span>
+                        <span id="valSpeed" class="text-cyber-neonGreen font-bold">1.5x</span>
+                    </div>
+                    <input type="range" id="rangeSpeed" min="0.2" max="3.0" step="0.1" value="1.5" class="w-full accent-cyber-neonGreen cursor-pointer" oninput="updateParam('speed', this.value)">
+                    <p class="text-[10px] text-slate-500 font-code">Фон, видео-сцены, сеть нейронов</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="flex justify-between text-xs font-code">
+                        <span class="text-slate-300">Температура</span>
+                        <span id="valTemp" class="text-cyber-neonPurple font-bold">1.25</span>
+                    </div>
+                    <input type="range" id="rangeTemp" min="0.1" max="2.0" step="0.05" value="1.25" class="w-full accent-cyber-neonPurple cursor-pointer" oninput="updateParam('temp', this.value)">
+                    <p class="text-[10px] text-slate-500 font-code">Передаётся модели: выше = креативнее</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="flex justify-between text-xs font-code">
+                        <span class="text-slate-300">Разнообразие (topP)</span>
+                        <span id="valChaos" class="text-rose-400 font-bold">42%</span>
+                    </div>
+                    <input type="range" id="rangeChaos" min="0" max="100" step="1" value="42" class="w-full accent-rose-500 cursor-pointer" oninput="updateParam('chaos', this.value)">
+                    <p class="text-[10px] text-slate-500 font-code">Передаётся модели как topP (0.5–1.0)</p>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-5 shadow-xl flex flex-col space-y-3">
+                <h2 class="font-cyber font-semibold text-xs tracking-wide text-slate-300 flex items-center gap-2">
+                    <i data-lucide="cpu" class="w-4 h-4 text-cyber-neonGreen"></i> Режим ИИ
+                </h2>
+                <select id="aiModeSelect" onchange="changeAIMode(this.value)" class="w-full bg-cyber-card border border-cyber-border text-cyber-neonGreen text-xs font-cyber font-semibold p-3 rounded-xl focus:outline-none focus:border-cyber-neonGreen transition-all">
+                    <option value="omniscient">🌌 Универсальный</option>
+                    <option value="architect">⚡ Архитектор кода & IT</option>
+                    <option value="artist">🎨 Художник & Визионер</option>
+                    <option value="philosophy">🔮 Глубокий философ</option>
+                </select>
+                <p id="modeDesc" class="text-[10px] text-slate-500 font-code"></p>
+            </div>
+        </div>
+
+        <!-- Center -->
+        <div class="order-1 lg:order-2 lg:col-span-9 flex flex-col space-y-6">
+
+            <div class="glass-panel rounded-2xl p-2 flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center space-x-2">
+                    <button onclick="switchTab('chat')" id="btnTabChat" class="px-5 py-2.5 rounded-xl font-cyber text-xs font-semibold flex items-center gap-2 transition-all"></button>
+                    <button onclick="switchTab('matrix')" id="btnTabMatrix" class="px-5 py-2.5 rounded-xl font-cyber text-xs font-semibold flex items-center gap-2 transition-all"></button>
+                </div>
+                <div class="flex items-center space-x-3 px-3 py-1">
+                    <span class="text-xs font-code text-slate-400">Статус:</span>
+                    <span id="aiStatusBadge" class="text-xs font-cyber flex items-center gap-1.5"></span>
+                </div>
+            </div>
+
+            <!-- Chat -->
+            <div id="viewChat" class="glass-panel rounded-2xl p-4 md:p-6 shadow-2xl flex flex-col h-[72vh] min-h-[520px]">
+                <div id="chatMessages" class="flex-1 overflow-y-auto pr-2 space-y-5 flex flex-col"></div>
+
+                <div class="mt-4 pt-4 border-t border-cyber-border">
+                    <form id="chatForm" class="flex items-end space-x-3">
+                        <div class="relative flex-1">
+                            <textarea id="chatInput" rows="1" placeholder="Вопрос, задача или команда /image, /3d, /video, /code…  (Enter — отправить, Shift+Enter — новая строка)"
+                                class="w-full bg-cyber-card border border-cyber-border rounded-xl px-4 py-3.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyber-neonGreen transition-all font-sans max-h-40"></textarea>
+                        </div>
+                        <button type="submit" id="sendBtn" class="cyber-button px-6 py-3.5 rounded-xl bg-gradient-to-r from-cyber-neonGreen to-cyber-neonCyan text-black font-cyber font-bold text-xs flex items-center justify-center gap-2 hover:shadow-neon-green transition-all"></button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Matrix -->
+            <div id="viewMatrix" class="glass-panel rounded-2xl p-4 md:p-6 shadow-2xl flex flex-col h-[72vh] min-h-[520px] hidden">
+                <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-cyber-border">
+                    <div>
+                        <h3 class="font-cyber font-bold text-sm text-cyber-neonCyan flex items-center gap-2"><i data-lucide="git-merge" class="w-4 h-4"></i> Нейросеть: визуализатор</h3>
+                        <p class="text-[10px] text-slate-500 font-code mt-1">Перетаскивайте нейроны · двойной клик — новый нейрон</p>
+                    </div>
+                    <div class="flex items-center flex-wrap gap-2">
+                        <button onclick="addRandomNode()" class="px-4 py-2 rounded-xl bg-cyber-card hover:bg-cyber-neonCyan/10 border border-cyber-border hover:border-cyber-neonCyan text-cyber-neonCyan font-cyber text-xs flex items-center gap-2 transition-all">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Нейрон
+                        </button>
+                        <button onclick="resetNetwork()" class="px-4 py-2 rounded-xl bg-cyber-card hover:bg-rose-500/10 border border-cyber-border hover:border-rose-500 text-rose-400 font-cyber text-xs flex items-center gap-2 transition-all">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Сброс
+                        </button>
+                        <button onclick="runMatrixPropagation()" class="cyber-button px-4 py-2 rounded-xl bg-gradient-to-r from-cyber-neonCyan to-cyber-neonPurple text-black font-cyber font-bold text-xs flex items-center gap-2 transition-all">
+                            <i data-lucide="play" class="w-4 h-4"></i> Импульс
+                        </button>
+                    </div>
+                </div>
+                <div class="flex-1 relative mt-4 bg-cyber-card/50 border border-cyber-border rounded-xl overflow-hidden">
+                    <canvas id="matrixCanvas" class="absolute inset-0 w-full h-full block" style="touch-action:none"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Settings modal -->
+    <div id="settingsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4">
+        <div class="glass-panel rounded-2xl p-6 w-full max-w-lg shadow-2xl space-y-4 bg-cyber-bg">
+            <div class="flex items-center justify-between">
+                <h3 class="font-cyber font-bold text-sm text-cyber-neonCyan flex items-center gap-2"><i data-lucide="settings" class="w-4 h-4"></i> Настройки</h3>
+                <button onclick="closeSettings()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-code text-slate-300">Gemini API-ключ</label>
+                <input id="setKey" type="password" autocomplete="off" placeholder="AIza…" class="w-full bg-cyber-card border border-cyber-border rounded-lg px-3 py-2 text-sm font-code focus:outline-none focus:border-cyber-neonGreen">
+                <p class="text-[10px] text-slate-500 font-code">Хранится только в localStorage этого браузера. Ключ получить: aistudio.google.com/apikey. На публичном сайте лучше ходить через свой прокси-сервер.</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="space-y-1">
+                    <label class="text-xs font-code text-slate-300">Текстовая модель</label>
+                    <input id="setTextModel" class="w-full bg-cyber-card border border-cyber-border rounded-lg px-3 py-2 text-xs font-code focus:outline-none focus:border-cyber-neonGreen">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-code text-slate-300">Модель картинок</label>
+                    <input id="setImageModel" class="w-full bg-cyber-card border border-cyber-border rounded-lg px-3 py-2 text-xs font-code focus:outline-none focus:border-cyber-neonGreen">
+                </div>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-code text-slate-300">Формат картинки</label>
+                <select id="setAspect" class="w-full bg-cyber-card border border-cyber-border rounded-lg px-3 py-2 text-xs font-code focus:outline-none">
+                    <option value="1:1">1:1 — квадрат</option>
+                    <option value="16:9">16:9 — широкий</option>
+                    <option value="9:16">9:16 — вертикальный</option>
+                    <option value="4:3">4:3</option>
+                </select>
+            </div>
+            <label class="flex items-center gap-2 text-xs font-code text-slate-300 cursor-pointer">
+                <input id="setStream" type="checkbox" class="accent-cyber-neonGreen"> Потоковый вывод ответа (печатает по мере генерации)
+            </label>
+            <div class="flex justify-between gap-2 pt-2">
+                <button onclick="clearKey()" class="mini-btn text-rose-400">Удалить ключ</button>
+                <div class="flex gap-2">
+                    <button onclick="closeSettings()" class="mini-btn">Отмена</button>
+                    <button onclick="saveSettings()" class="cyber-button px-5 py-2 rounded-lg bg-gradient-to-r from-cyber-neonGreen to-cyber-neonCyan text-black font-cyber font-bold text-xs">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HTML preview modal (sandboxed) -->
+    <div id="previewModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4">
+        <div class="glass-panel rounded-2xl p-3 w-full max-w-5xl h-[85vh] flex flex-col bg-cyber-bg">
+            <div class="flex items-center justify-between pb-2">
+                <span class="font-cyber text-xs text-cyber-neonGreen">Предпросмотр HTML (изолированный)</span>
+                <button onclick="closePreview()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <iframe id="previewFrame" sandbox="allow-scripts" class="flex-1 w-full rounded-lg bg-white"></iframe>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 rounded-xl bg-cyber-card border border-cyber-neonGreen/50 text-xs font-code text-cyber-neonGreen shadow-neon-green hidden"></div>
+
+    <script>
+    (function () {
+        'use strict';
+        const $ = id => document.getElementById(id);
+        const rand = (a, b) => Math.random() * (b - a) + a;
+        const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        /* ================= State & storage ================= */
+        const LS = { settings: 'nexusmind_settings_v1', chat: 'nexusmind_chat_v1' };
+        const DEFAULTS = { apiKey: '', textModel: 'gemini-3-flash-preview', imageModel: 'gemini-3.1-flash-image', aspect: '1:1', stream: true, sound: true };
+
+        function loadJSON(key, fallback) {
+            try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (e) { return fallback; }
+        }
+        function saveJSON(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+
+        let settings = Object.assign({}, DEFAULTS, loadJSON(LS.settings, {}));
+        let parameters = { speed: 1.5, temp: 1.25, chaos: 42 };
+        let aiMode = 'omniscient';
+        let currentTab = 'chat';
+        let chatHistory = loadJSON(LS.chat, []);
+        if (!Array.isArray(chatHistory)) chatHistory = [];
+        let busy = false;
+        let currentAbort = null;
+
+        const MODES = {
+            omniscient: { desc: 'Сбалансированный помощник для любых вопросов.', prompt: 'Ты — NexusMind, умный и дружелюбный ИИ-ассистент. Отвечай по-русски (если пользователь не пишет на другом языке), точно, по делу и с понятными объяснениями.' },
+            architect: { desc: 'Код, архитектура, отладка. Отвечает с готовыми примерами.', prompt: 'Ты — NexusMind в режиме «Архитектор». Ты senior-разработчик. Отвечай по-русски. Давай полный рабочий код в блоках ```язык, объясняй архитектурные решения, указывай на возможные ошибки и граничные случаи.' },
+            artist: { desc: 'Образы, идеи, описания и промпты для генерации.', prompt: 'Ты — NexusMind в режиме «Художник». Отвечай по-русски, образно и вдохновляюще. Помогай придумывать визуальные концепции, палитры, композиции и подробные промпты для генерации изображений.' },
+            philosophy: { desc: 'Размышления, этика, смыслы, разные точки зрения.', prompt: 'Ты — NexusMind в режиме «Философ». Отвечай по-русски, глубоко и вдумчиво, рассматривай разные точки зрения, задавай уточняющие вопросы и избегай догматизма.' }
+        };
+
+        /* ================= Helpers ================= */
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+
+        let toastTimer = null;
+        function toast(msg) {
+            const el = $('toast');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.add('hidden'), 2200);
+        }
+
+        function download(filename, blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+        }
+
+        /* ================= Audio ================= */
+        let audioCtx = null;
+        function playTone(freq, type = 'sine', duration = 0.1) {
+            if (!settings.sound) return;
+            try {
+                audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+        function refreshAudioUI() {
+            $('audioText').textContent = settings.sound ? 'Звук: ВКЛ' : 'Звук: ВЫКЛ';
+            $('audioIconWrap').innerHTML = `<i data-lucide="${settings.sound ? 'volume-2' : 'volume-x'}" class="w-4 h-4 text-cyber-neonGreen"></i>`;
+            lucide.createIcons();
+        }
+        window.toggleAudio = function () {
+            settings.sound = !settings.sound;
+            saveJSON(LS.settings, settings);
+            refreshAudioUI();
+            playTone(440, 'sine', 0.1);
+        };
+
+        /* ================= Settings UI ================= */
+        function refreshHeaderModel() {
+            $('modelLabel').textContent = settings.textModel.toUpperCase();
+            $('keyDot').className = 'w-2 h-2 rounded-full ' + (settings.apiKey ? 'bg-cyber-neonGreen animate-pulse' : 'bg-rose-500');
+            $('keyDot').title = settings.apiKey ? 'API-ключ задан' : 'API-ключ не задан';
+        }
+        window.openSettings = function () {
+            $('setKey').value = settings.apiKey;
+            $('setTextModel').value = settings.textModel;
+            $('setImageModel').value = settings.imageModel;
+            $('setAspect').value = settings.aspect;
+            $('setStream').checked = settings.stream;
+            $('settingsModal').classList.remove('hidden');
+            $('settingsModal').classList.add('flex');
+        };
+        window.closeSettings = function () {
+            $('settingsModal').classList.add('hidden');
+            $('settingsModal').classList.remove('flex');
+        };
+        window.saveSettings = function () {
+            settings.apiKey = $('setKey').value.trim();
+            settings.textModel = $('setTextModel').value.trim() || DEFAULTS.textModel;
+            settings.imageModel = $('setImageModel').value.trim() || DEFAULTS.imageModel;
+            settings.aspect = $('setAspect').value;
+            settings.stream = $('setStream').checked;
+            saveJSON(LS.settings, settings);
+            refreshHeaderModel();
+            closeSettings();
+            toast('Настройки сохранены');
+            playTone(800, 'sine', 0.1);
+        };
+        window.clearKey = function () {
+            settings.apiKey = '';
+            $('setKey').value = '';
+            saveJSON(LS.settings, settings);
+            refreshHeaderModel();
+            toast('Ключ удалён');
+        };
+
+        /* ================= Preview modal ================= */
+        window.openHtmlPreview = function (btn) {
+            const block = btn.closest('[data-code]');
+            if (!block) return;
+            $('previewFrame').srcdoc = decodeURIComponent(block.dataset.code);
+            $('previewModal').classList.remove('hidden');
+            $('previewModal').classList.add('flex');
+        };
+        window.closePreview = function () {
+            $('previewModal').classList.add('hidden');
+            $('previewModal').classList.remove('flex');
+            $('previewFrame').srcdoc = '';
+        };
+        window.copyCode = async function (btn) {
+            const block = btn.closest('[data-code]');
+            if (!block) return;
+            try {
+                await navigator.clipboard.writeText(decodeURIComponent(block.dataset.code));
+                const old = btn.textContent;
+                btn.textContent = 'Скопировано ✓';
+                setTimeout(() => (btn.textContent = old), 1500);
+            } catch (e) { toast('Не удалось скопировать'); }
+        };
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { closeSettings(); closePreview(); }
+        });
+
+        /* ================= Params ================= */
+        window.updateParam = function (param, value) {
+            parameters[param] = parseFloat(value);
+            playTone(300 + parameters[param] * 100, 'sine', 0.05);
+            if (param === 'speed') $('valSpeed').textContent = value + 'x';
+            if (param === 'temp') $('valTemp').textContent = value;
+            if (param === 'chaos') $('valChaos').textContent = value + '%';
+        };
+
+        window.changeAIMode = function (mode) {
+            aiMode = mode;
+            $('modeDesc').textContent = MODES[mode].desc;
+            playTone(600, 'sine', 0.15);
+            appendAiMessage(`Режим изменён: <b>${escapeHtml($('aiModeSelect').selectedOptions[0].textContent)}</b>. Новые ответы будут учитывать этот стиль.`);
+        };
+
+        window.setPromptPrefix = function (prefix) {
+            const input = $('chatInput');
+            input.value = prefix;
+            autoGrow();
+            input.focus();
+            playTone(500, 'sine', 0.08);
+        };
+
+        /* ================= Tabs ================= */
+        const TAB_ACTIVE_CHAT = 'px-5 py-2.5 rounded-xl font-cyber text-xs font-semibold flex items-center gap-2 transition-all bg-gradient-to-r from-cyber-neonGreen/20 to-cyber-neonCyan/20 text-cyber-neonGreen border border-cyber-neonGreen/50 shadow-neon-green';
+        const TAB_ACTIVE_MATRIX = 'px-5 py-2.5 rounded-xl font-cyber text-xs font-semibold flex items-center gap-2 transition-all bg-gradient-to-r from-cyber-neonCyan/20 to-cyber-neonPurple/20 text-cyber-neonCyan border border-cyber-neonCyan/50 shadow-neon-cyan';
+        const TAB_IDLE = 'px-5 py-2.5 rounded-xl font-cyber text-xs font-semibold flex items-center gap-2 transition-all bg-cyber-card text-slate-400 border border-cyber-border hover:text-white hover:border-slate-600';
+
+        window.switchTab = function (tab) {
+            currentTab = tab;
+            $('viewChat').classList.toggle('hidden', tab !== 'chat');
+            $('viewMatrix').classList.toggle('hidden', tab !== 'matrix');
+            $('btnTabChat').className = tab === 'chat' ? TAB_ACTIVE_CHAT : TAB_IDLE;
+            $('btnTabMatrix').className = tab === 'matrix' ? TAB_ACTIVE_MATRIX : TAB_IDLE;
+            if (tab === 'matrix') startNetwork();
+            playTone(550, 'sine', 0.1);
+        };
+        $('btnTabChat').innerHTML = '<i data-lucide="message-square" class="w-4 h-4"></i> Супер Чат ИИ';
+        $('btnTabMatrix').innerHTML = '<i data-lucide="git-merge" class="w-4 h-4"></i> Визуализатор сети';
+
+        /* ================= Status ================= */
+        function setStatus(state) {
+            const badge = $('aiStatusBadge');
+            const map = {
+                ready: ['text-cyber-neonGreen', 'bg-cyber-neonGreen animate-pulse', 'ГОТОВ'],
+                busy: ['text-cyber-neonPurple', 'bg-cyber-neonPurple animate-ping', 'ГЕНЕРАЦИЯ…'],
+                error: ['text-rose-400', 'bg-rose-500', 'ОШИБКА']
+            };
+            const [txt, dot, label] = map[state];
+            badge.className = `text-xs font-cyber flex items-center gap-1.5 ${txt}`;
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full ${dot}"></span> ${label}`;
+        }
+
+        function setBusy(on) {
+            busy = on;
+            const btn = $('sendBtn');
+            if (on) {
+                btn.innerHTML = '<span>СТОП</span><i data-lucide="square" class="w-4 h-4"></i>';
+                btn.className = 'px-6 py-3.5 rounded-xl bg-rose-500 text-white font-cyber font-bold text-xs flex items-center justify-center gap-2 transition-all';
+                setStatus('busy');
+            } else {
+                btn.innerHTML = '<span>ОТПРАВИТЬ</span><i data-lucide="send" class="w-4 h-4"></i>';
+                btn.className = 'cyber-button px-6 py-3.5 rounded-xl bg-gradient-to-r from-cyber-neonGreen to-cyber-neonCyan text-black font-cyber font-bold text-xs flex items-center justify-center gap-2 hover:shadow-neon-green transition-all';
+            }
+            lucide.createIcons();
+        }
+
+        /* ================= Markdown (safe) ================= */
+        function codeBlockHTML(lang, code) {
+            const clean = code.replace(/\n$/, '');
+            const enc = encodeURIComponent(clean);
+            const runBtn = /^(html?)$/i.test(lang) ? '<button type="button" onclick="openHtmlPreview(this)" class="mini-btn">▶ Открыть</button>' : '';
+            return `<div class="my-3" data-code="${enc}">
+                <div class="flex items-center justify-between bg-slate-900 px-3 py-1.5 rounded-t-lg border-t border-x border-cyber-border text-xs font-code text-cyber-neonGreen">
+                    <span>${escapeHtml(lang || 'text')}</span>
+                    <div class="flex gap-2">${runBtn}<button type="button" onclick="copyCode(this)" class="mini-btn">Копировать</button></div>
+                </div>
+                <pre class="chat-rendered-code rounded-b-lg"><code>${escapeHtml(clean)}</code></pre>
+            </div>`;
+        }
+
+        function renderMarkdown(text) {
+            // close an unfinished code fence while streaming
+            if (((text.match(/```/g) || []).length) % 2 === 1) text += '\n```';
+            const blocks = [];
+            text = text.replace(/```([\w+#-]*)\n?([\s\S]*?)```/g, (m, lang, code) => {
+                blocks.push(codeBlockHTML(lang, code));
+                return `\u0000B${blocks.length - 1}\u0000`;
+            });
+            let html = escapeHtml(text);
+            html = html.replace(/`([^`\n]+)`/g, '<code class="inline-code">$1</code>');
+            html = html.replace(/^#{1,4}\s+(.*)$/gm, '<div class="font-cyber text-cyber-neonCyan font-bold mt-3 mb-1">$1</div>');
+            html = html.replace(/^\s*[-*]\s+/gm, '• ');
+            html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong class="text-white">$1</strong>');
+            html = html.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+            html = html.replace(/\n/g, '<br>');
+            html = html.replace(/\u0000B(\d+)\u0000/g, (m, i) => blocks[+i]);
+            return html;
+        }
+
+        /* ================= Chat DOM ================= */
+        const chatBox = $('chatMessages');
+        function nearBottom() { return chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 140; }
+        function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
+
+        function createAiBubble() {
+            const wrap = document.createElement('div');
+            wrap.className = 'flex items-start space-x-3 msg-in';
+            wrap.innerHTML = `
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyber-neonGreen to-cyber-neonCyan p-0.5 flex-shrink-0 shadow-neon-green">
+                    <div class="w-full h-full bg-cyber-bg rounded-[10px] flex items-center justify-center"><i data-lucide="cpu" class="w-4 h-4 text-cyber-neonGreen"></i></div>
+                </div>
+                <div class="flex-1 min-w-0 bg-cyber-card border border-cyber-border rounded-2xl p-4 shadow-md space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-cyber text-xs text-cyber-neonGreen font-bold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-cyber-neonGreen animate-pulse"></span>NEXUSMIND</span>
+                        <span class="text-[10px] font-code text-slate-500">${new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <div class="msg-body text-sm text-slate-200 leading-relaxed font-sans break-words"></div>
+                </div>`;
+            const stick = nearBottom();
+            chatBox.appendChild(wrap);
+            lucide.createIcons();
+            if (stick) scrollToBottom();
+            return wrap.querySelector('.msg-body');
+        }
+
+        function appendAiMessage(html) {
+            const body = createAiBubble();
+            body.innerHTML = html;
+            scrollToBottom();
+            return body;
+        }
+
+        function appendUserMessage(text) {
+            const wrap = document.createElement('div');
+            wrap.className = 'flex items-start space-x-3 justify-end msg-in';
+            wrap.innerHTML = `<div class="max-w-[85%] bg-cyber-card border border-cyber-neonGreen/40 rounded-2xl p-4 shadow-md"><p class="text-sm text-slate-100 font-sans whitespace-pre-wrap break-words">${escapeHtml(text)}</p></div>`;
+            chatBox.appendChild(wrap);
+            scrollToBottom();
+        }
+
+        function typingHTML() { return '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>'; }
+
+        function renderWelcome() {
+            appendAiMessage(`
+                <p class="mb-2">Привет! Я <b>NexusMind</b>. Умею отвечать на вопросы, писать код и создавать мультимедиа прямо в браузере.</p>
+                <ul class="text-xs text-slate-300 space-y-1.5 font-code list-disc list-inside bg-cyber-bg/50 p-3 rounded-xl border border-cyber-border">
+                    <li><b>Чат и код:</b> обычные вопросы и <code class="inline-code">/code написать парсер на Python</code></li>
+                    <li><b>Картинки:</b> <code class="inline-code">/image неоновый космос</code> (нужна модель картинок и API-ключ)</li>
+                    <li><b>3D:</b> <code class="inline-code">/3d ракета</code> — модель вращается мышью/пальцем</li>
+                    <li><b>Видео-сцены:</b> <code class="inline-code">/video неоновый дождь</code> — с записью в .webm</li>
+                </ul>
+                <p class="mt-2 text-xs text-slate-400">Чтобы чат и картинки заработали, добавьте API-ключ в <button class="underline text-cyber-neonCyan" onclick="openSettings()">настройках</button>.</p>
+            `);
+        }
+
+        function restoreChat() {
+            chatBox.innerHTML = '';
+            renderWelcome();
+            chatHistory.forEach(m => {
+                const t = (m.parts || []).map(p => p.text || '').join('');
+                if (m.role === 'user') appendUserMessage(t);
+                else appendAiMessage(renderMarkdown(t));
+            });
+        }
+        const saveChat = () => saveJSON(LS.chat, chatHistory.slice(-60));
+
+        /* ================= Reset / export ================= */
+        window.triggerGlobalReset = function () {
+            playTone(150, 'sawtooth', 0.3);
+            if (currentAbort) currentAbort.abort();
+            parameters = { speed: 1.5, temp: 1.25, chaos: 42 };
+            $('rangeSpeed').value = 1.5; $('rangeTemp').value = 1.25; $('rangeChaos').value = 42;
+            $('valSpeed').textContent = '1.5x'; $('valTemp').textContent = '1.25'; $('valChaos').textContent = '42%';
+            chatHistory = [];
+            try { localStorage.removeItem(LS.chat); } catch (e) {}
+            chatBox.innerHTML = '';
+            renderWelcome();
+            appendAiMessage('Чат очищен, параметры сброшены.');
+        };
+
+        window.exportChat = function () {
+            if (!chatHistory.length) { toast('Чат пуст'); return; }
+            const md = chatHistory.map(m => `### ${m.role === 'user' ? 'Вы' : 'NexusMind'}\n\n${(m.parts || []).map(p => p.text || '').join('')}\n`).join('\n');
+            download('nexusmind-chat.md', new Blob([md], { type: 'text/markdown;charset=utf-8' }));
+        };
+
+        /* ================= Gemini API ================= */
+        function apiUrl(model, method, sse) {
+            return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:${method}${sse ? '?alt=sse' : ''}`;
+        }
+        function apiHeaders() { return { 'Content-Type': 'application/json', 'x-goog-api-key': settings.apiKey }; }
+
+        async function apiError(res) {
+            let msg = `HTTP ${res.status}`;
+            try {
+                const j = await res.json();
+                if (j && j.error && j.error.message) msg = j.error.message;
+            } catch (e) {}
+            if (res.status === 400 && /api key/i.test(msg)) msg += ' — проверьте ключ в настройках.';
+            if (res.status === 404) msg += ' — проверьте название модели в настройках.';
+            if (res.status === 429) msg += ' — превышен лимит запросов, попробуйте позже.';
+            return new Error(msg);
+        }
+
+        function requireKey() {
+            if (settings.apiKey) return true;
+            appendAiMessage('🔑 Для этой команды нужен API-ключ Gemini. Откройте <button class="underline text-cyber-neonCyan" onclick="openSettings()">настройки</button> и вставьте ключ.');
+            setStatus('error');
+            openSettings();
+            return false;
+        }
+
+        function buildContents() {
+            const c = chatHistory.slice(-30);
+            while (c.length && c[0].role !== 'user') c.shift();
+            return c;
+        }
+
+        async function generateTextResponse(prompt) {
+            if (!requireKey()) return;
+            chatHistory.push({ role: 'user', parts: [{ text: prompt }] });
+
+            const payload = {
+                contents: buildContents(),
+                systemInstruction: { parts: [{ text: MODES[aiMode].prompt }] },
+                generationConfig: {
+                    temperature: clamp(parameters.temp, 0, 2),
+                    topP: clamp(0.5 + parameters.chaos / 200, 0.5, 1)
+                }
+            };
+
+            const body = createAiBubble();
+            body.innerHTML = typingHTML();
+            let full = '';
+            currentAbort = new AbortController();
+
+            try {
+                const res = await fetch(apiUrl(settings.textModel, settings.stream ? 'streamGenerateContent' : 'generateContent', settings.stream),
+                    { method: 'POST', headers: apiHeaders(), body: JSON.stringify(payload), signal: currentAbort.signal });
+                if (!res.ok) throw await apiError(res);
+
+                const extract = j => ((j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || []).map(p => p.text || '').join('');
+
+                if (settings.stream && res.body) {
+                    const reader = res.body.getReader();
+                    const dec = new TextDecoder();
+                    let buf = '';
+                    for (;;) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        buf += dec.decode(value, { stream: true });
+                        let idx;
+                        while ((idx = buf.indexOf('\n')) >= 0) {
+                            const line = buf.slice(0, idx).trim();
+                            buf = buf.slice(idx + 1);
+                            if (!line.startsWith('data:')) continue;
+                            const data = line.slice(5).trim();
+                            if (!data || data === '[DONE]') continue;
+                            try {
+                                const t = extract(JSON.parse(data));
+                                if (t) {
+                                    full += t;
+                                    const stick = nearBottom();
+                                    body.innerHTML = renderMarkdown(full);
+                                    if (stick) scrollToBottom();
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                } else {
+                    full = extract(await res.json());
+                    body.innerHTML = renderMarkdown(full);
+                }
+
+                if (!full) {
+                    chatHistory.pop();
+                    body.innerHTML = 'Модель вернула пустой ответ (возможно, сработал фильтр). Попробуйте переформулировать запрос.';
+                } else {
+                    chatHistory.push({ role: 'model', parts: [{ text: full }] });
+                }
+                saveChat();
+                setStatus('ready');
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    if (full) { chatHistory.push({ role: 'model', parts: [{ text: full }] }); body.innerHTML = renderMarkdown(full) + '<div class="text-xs text-slate-500 mt-2">⏹ Остановлено</div>'; }
+                    else { chatHistory.pop(); body.innerHTML = '<span class="text-slate-500">⏹ Остановлено</span>'; }
+                    setStatus('ready');
+                } else {
+                    if (!full) chatHistory.pop();
+                    body.innerHTML = '⚠️ <b>Ошибка:</b> ' + escapeHtml(err.message);
+                    setStatus('error');
+                }
+                saveChat();
+            } finally {
+                currentAbort = null;
+            }
+        }
+
+        async function generateImage(prompt) {
+            if (!requireKey()) return;
+            const body = createAiBubble();
+            body.innerHTML = `<div class="text-xs font-code text-cyber-neonPurple">${typingHTML()} Генерирую изображение…</div>`;
+            currentAbort = new AbortController();
+            try {
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: settings.aspect } }
+                };
+                const res = await fetch(apiUrl(settings.imageModel, 'generateContent'), { method: 'POST', headers: apiHeaders(), body: JSON.stringify(payload), signal: currentAbort.signal });
+                if (!res.ok) throw await apiError(res);
+                const result = await res.json();
+                const parts = (result.candidates && result.candidates[0] && result.candidates[0].content && result.candidates[0].content.parts) || [];
+                const imgPart = parts.find(p => p.inlineData);
+                if (!imgPart) throw new Error('Модель не вернула изображение (возможно, запрос отклонён фильтром).');
+                const mime = imgPart.inlineData.mimeType || 'image/png';
+                const url = `data:${mime};base64,${imgPart.inlineData.data}`;
+                body.innerHTML = `
+                    <p class="mb-2"><strong>🎨 Изображение:</strong> <em>${escapeHtml(prompt)}</em></p>
+                    <img src="${url}" alt="${escapeHtml(prompt)}" class="w-full max-w-md rounded-xl border border-cyber-neonGreen/50 shadow-neon-green">
+                    <div class="mt-2"><button type="button" class="mini-btn dl-img">⬇ Скачать</button></div>`;
+                body.querySelector('.dl-img').addEventListener('click', async () => {
+                    const blob = await (await fetch(url)).blob();
+                    download('nexusmind-image.' + (mime.split('/')[1] || 'png'), blob);
+                });
+                playTone(900, 'triangle', 0.2);
+                setStatus('ready');
+            } catch (err) {
+                if (err.name === 'AbortError') { body.innerHTML = '<span class="text-slate-500">⏹ Остановлено</span>'; setStatus('ready'); }
+                else { body.innerHTML = '❌ <b>Ошибка генерации изображения:</b> ' + escapeHtml(err.message); setStatus('error'); }
+            } finally { currentAbort = null; }
+            scrollToBottom();
+        }
+
+        /* ================= 3D models ================= */
+        const mat = (color, o) => new THREE.MeshStandardMaterial(Object.assign({ color, metalness: 0.35, roughness: 0.5 }, o || {}));
+        const mk = (geo, color, pos, o) => { const m = new THREE.Mesh(geo, mat(color, o)); if (pos) m.position.set(pos[0], pos[1], pos[2]); return m; };
+
+        const MODELS = [
+            { name: 'Машина', re: /машин|авто|car|тачк/i, build() {
+                const g = new THREE.Group();
+                g.add(mk(new THREE.BoxGeometry(2.6, 0.6, 1.3), 0xff007f, [0, 0, 0]));
+                g.add(mk(new THREE.BoxGeometry(1.3, 0.55, 1.1), 0x1c1c3a, [-0.15, 0.55, 0]));
+                [[-0.85, -0.3, 0.7], [0.85, -0.3, 0.7], [-0.85, -0.3, -0.7], [0.85, -0.3, -0.7]].forEach(p => {
+                    const w = mk(new THREE.CylinderGeometry(0.34, 0.34, 0.3, 24), 0x111111, p); w.rotation.x = Math.PI / 2; g.add(w);
+                });
+                [0.45, -0.45].forEach(z => g.add(mk(new THREE.BoxGeometry(0.1, 0.15, 0.3), 0x00ffcc, [1.3, 0.05, z], { emissive: 0x00ffcc, emissiveIntensity: 1 })));
+                return g;
+            } },
+            { name: 'Дом', re: /дом|house|здани|хижин/i, build() {
+                const g = new THREE.Group();
+                g.add(mk(new THREE.BoxGeometry(2.2, 1.5, 2), 0x2a2a5a, [0, -0.3, 0]));
+                const roof = mk(new THREE.ConeGeometry(1.9, 1.1, 4), 0xff007f, [0, 1.0, 0]); roof.rotation.y = Math.PI / 4; g.add(roof);
+                g.add(mk(new THREE.BoxGeometry(0.5, 0.9, 0.06), 0x00ffcc, [0, -0.6, 1.03], { emissive: 0x00ffcc, emissiveIntensity: 0.4 }));
+                g.add(mk(new THREE.BoxGeometry(0.45, 0.45, 0.06), 0xffe066, [0.65, -0.1, 1.03], { emissive: 0xffe066, emissiveIntensity: 0.8 }));
+                g.add(mk(new THREE.BoxGeometry(0.45, 0.45, 0.06), 0xffe066, [-0.65, -0.1, 1.03], { emissive: 0xffe066, emissiveIntensity: 0.8 }));
+                return g;
+            } },
+            { name: 'Дерево', re: /дерев|ёлк|елк|tree|сосн/i, build() {
+                const g = new THREE.Group();
+                g.add(mk(new THREE.CylinderGeometry(0.18, 0.25, 1, 12), 0x6b4423, [0, -1, 0]));
+                [[1.4, 1.2, -0.2], [1.1, 1.0, 0.5], [0.8, 0.9, 1.1]].forEach(([r, h, y]) => g.add(mk(new THREE.ConeGeometry(r, h, 14), 0x1faa59, [0, y, 0])));
+                return g;
+            } },
+            { name: 'Ракета', re: /ракет|rocket|космолет|шаттл/i, build() {
+                const g = new THREE.Group();
+                g.add(mk(new THREE.CylinderGeometry(0.5, 0.5, 2, 24), 0xeeeeff, [0, 0, 0]));
+                g.add(mk(new THREE.ConeGeometry(0.5, 0.9, 24), 0xff007f, [0, 1.45, 0]));
+                g.add(mk(new THREE.SphereGeometry(0.2, 16, 16), 0x00e5ff, [0, 0.4, 0.45], { emissive: 0x00e5ff, emissiveIntensity: 0.6 }));
+                for (let i = 0; i < 3; i++) {
+                    const a = i * Math.PI * 2 / 3;
+                    const fin = mk(new THREE.BoxGeometry(0.1, 0.8, 0.6), 0xff007f, [Math.cos(a) * 0.6, -0.9, Math.sin(a) * 0.6]);
+                    fin.rotation.y = -a; g.add(fin);
+                }
+                const flame = mk(new THREE.ConeGeometry(0.35, 0.9, 16), 0xffa500, [0, -1.5, 0], { emissive: 0xff6600, emissiveIntensity: 1 });
+                flame.rotation.z = Math.PI; g.add(flame);
+                return g;
+            } },
+            { name: 'Робот', re: /робот|robot|андроид/i, build() {
+                const g = new THREE.Group();
+                g.add(mk(new THREE.BoxGeometry(1.2, 1.3, 0.8), 0x4a6cff, [0, 0, 0]));
+                g.add(mk(new THREE.BoxGeometry(0.8, 0.7, 0.7), 0xbbbbdd, [0, 1.05, 0]));
+                [-0.2, 0.2].forEach(x => g.add(mk(new THREE.SphereGeometry(0.09, 12, 12), 0x00ffcc, [x, 1.1, 0.36], { emissive: 0x00ffcc, emissiveIntensity: 1 })));
+                g.add(mk(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 8), 0xff007f, [0, 1.6, 0]));
+                g.add(mk(new THREE.SphereGeometry(0.08, 12, 12), 0xff007f, [0, 1.85, 0], { emissive: 0xff007f, emissiveIntensity: 1 }));
+                [-0.85, 0.85].forEach(x => g.add(mk(new THREE.BoxGeometry(0.3, 1.1, 0.3), 0xbbbbdd, [x, 0, 0])));
+                [-0.3, 0.3].forEach(x => g.add(mk(new THREE.BoxGeometry(0.4, 0.9, 0.4), 0x2a2a5a, [x, -1.1, 0])));
+                return g;
+            } },
+            { name: 'Планета', re: /планет|planet|сатурн|земл/i, build() {
+                const g = new THREE.Group();
+                g.add(mk(new THREE.SphereGeometry(1.2, 40, 40), 0x4a6cff));
+                const ring = mk(new THREE.TorusGeometry(1.9, 0.08, 2, 90), 0x00ffcc, null, { emissive: 0x00ffcc, emissiveIntensity: 0.4 });
+                ring.rotation.x = Math.PI / 2.3; ring.scale.set(1, 1, 0.3); g.add(ring);
+                return g;
+            } },
+            { name: 'Шар', re: /шар|сфер|sphere|ball/i, build() { return mk(new THREE.SphereGeometry(1.5, 40, 40), 0x00e5ff); } },
+            { name: 'Тор', re: /тор\b|кольц|пончик|torus|donut/i, build() { return mk(new THREE.TorusGeometry(1.2, 0.45, 24, 100), 0xff007f); } },
+            { name: 'Пирамида', re: /пирамид|конус|pyramid|cone/i, build() { return mk(new THREE.ConeGeometry(1.6, 2.4, 4), 0xffb000); } },
+            { name: 'Звезда', re: /звезд|звёзд|star|кристалл/i, build() { return mk(new THREE.IcosahedronGeometry(1.5, 0), 0xbd00ff, null, { emissive: 0x6600aa, emissiveIntensity: 0.4 }); } },
+            { name: 'Куб', re: /куб|cube|ящик|коробк/i, build() { return mk(new THREE.BoxGeometry(1.9, 1.9, 1.9), 0x00ffcc); } }
+        ];
+        const FALLBACK_MODEL = { name: 'Абстракция', build() { return mk(new THREE.TorusKnotGeometry(0.95, 0.32, 160, 20), 0x00e5ff); } };
+
+        function generate3DModel(prompt) {
+            const found = MODELS.find(m => m.re.test(prompt)) || FALLBACK_MODEL;
+            const body = appendAiMessage(`
+                <p class="mb-2"><strong>📦 3D-модель (${escapeHtml(found.name)}):</strong> <em>${escapeHtml(prompt)}</em></p>
+                <div class="three-mount w-full h-72 bg-black/80 rounded-xl border border-cyber-neonCyan relative overflow-hidden touch-none cursor-grab"></div>
+                <div class="mt-2 flex flex-wrap gap-2 items-center">
+                    <button type="button" class="mini-btn b-wire">Каркас</button>
+                    <button type="button" class="mini-btn b-spin">Авто-вращение: вкл</button>
+                    <span class="text-[10px] text-slate-500 font-code">Тяните — вращать, колесо — масштаб</span>
+                </div>`);
+            const mount = body.querySelector('.three-mount');
+            if (typeof THREE === 'undefined') { mount.innerHTML = '<div class="p-4 text-xs text-rose-400">Three.js не загрузился.</div>'; return; }
+
+            let renderer;
+            try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
+            catch (e) { mount.innerHTML = '<div class="p-4 text-xs text-rose-400">WebGL недоступен в этом браузере.</div>'; return; }
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+            camera.position.set(0, 0.8, 5.5);
+            camera.lookAt(0, 0, 0);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            mount.appendChild(renderer.domElement);
+
+            scene.add(new THREE.HemisphereLight(0x99ccff, 0x220033, 0.9));
+            const key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(4, 5, 4); scene.add(key);
+            const rim = new THREE.PointLight(0xff007f, 1.2, 20); rim.position.set(-4, 2, -3); scene.add(rim);
+
+            const model = found.build();
+            scene.add(model);
+
+            const floor = new THREE.GridHelper(8, 16, 0x00ffcc, 0x1f1f3a);
+            floor.position.y = -1.9;
+            scene.add(floor);
+
+            const resize = () => {
+                const w = mount.clientWidth, h = mount.clientHeight;
+                if (!w || !h) return;
+                renderer.setSize(w, h);
+                camera.aspect = w / h; camera.updateProjectionMatrix();
+            };
+            resize();
+            const ro = new ResizeObserver(resize); ro.observe(mount);
+
+            let dragging = false, last = { x: 0, y: 0 }, autoSpin = true, wire = false;
+            mount.addEventListener('pointerdown', e => { dragging = true; last = { x: e.clientX, y: e.clientY }; mount.setPointerCapture(e.pointerId); mount.classList.add('cursor-grabbing'); });
+            mount.addEventListener('pointerup', () => { dragging = false; mount.classList.remove('cursor-grabbing'); });
+            mount.addEventListener('pointermove', e => {
+                if (!dragging) return;
+                model.rotation.y += (e.clientX - last.x) * 0.01;
+                model.rotation.x = clamp(model.rotation.x + (e.clientY - last.y) * 0.01, -1.2, 1.2);
+                last = { x: e.clientX, y: e.clientY };
+            });
+            mount.addEventListener('wheel', e => { e.preventDefault(); camera.position.z = clamp(camera.position.z + e.deltaY * 0.005, 2.5, 12); }, { passive: false });
+
+            body.querySelector('.b-wire').addEventListener('click', () => {
+                wire = !wire;
+                model.traverse(o => { if (o.material) o.material.wireframe = wire; });
+            });
+            const spinBtn = body.querySelector('.b-spin');
+            spinBtn.addEventListener('click', () => { autoSpin = !autoSpin; spinBtn.textContent = 'Авто-вращение: ' + (autoSpin ? 'вкл' : 'выкл'); });
+
+            (function animate() {
+                if (!mount.isConnected) {
+                    ro.disconnect();
+                    model.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+                    renderer.dispose();
+                    return;
+                }
+                requestAnimationFrame(animate);
+                if (autoSpin && !dragging && !reduceMotion) model.rotation.y += 0.008 * parameters.speed;
+                renderer.render(scene, camera);
+            })();
+            playTone(850, 'sine', 0.2);
+        }
+
+        /* ================= Video scenes ================= */
+        const SCENES = [
+            { name: 'Неоновый дождь', re: /дожд|rain|неон|neon|город|city/i,
+                init(w, h) {
+                    const buildings = [];
+                    let x = 0;
+                    while (x < w) { const bw = rand(30, 70), bh = rand(h * 0.25, h * 0.7); buildings.push({ x, w: bw, h: bh, c: Math.random() > 0.5 ? '#ff007f' : '#00e5ff' }); x += bw + rand(2, 8); }
+                    const drops = Array.from({ length: 140 }, () => ({ x: rand(0, w), y: rand(0, h), l: rand(8, 22), v: rand(6, 12) }));
+                    return { buildings, drops };
+                },
+                draw(s, c, w, h, t, dt) {
+                    c.fillStyle = 'rgba(4,4,12,0.35)'; c.fillRect(0, 0, w, h);
+                    s.buildings.forEach(b => {
+                        c.fillStyle = '#0a0a1e'; c.fillRect(b.x, h - b.h, b.w, b.h);
+                        c.strokeStyle = b.c; c.shadowBlur = 12; c.shadowColor = b.c; c.lineWidth = 1.5; c.strokeRect(b.x, h - b.h, b.w, b.h);
+                        c.shadowBlur = 0; c.fillStyle = 'rgba(255,224,102,0.5)';
+                        for (let wy = h - b.h + 10; wy < h - 10; wy += 16) for (let wx = b.x + 6; wx < b.x + b.w - 8; wx += 12) if (Math.sin(wx * 12.9 + wy * 78.2) > 0.2) c.fillRect(wx, wy, 5, 7);
+                    });
+                    c.lineWidth = 1.2;
+                    s.drops.forEach((d, i) => {
+                        c.strokeStyle = i % 3 ? 'rgba(0,229,255,0.6)' : 'rgba(255,0,127,0.6)';
+                        c.beginPath(); c.moveTo(d.x, d.y); c.lineTo(d.x - d.l * 0.2, d.y + d.l); c.stroke();
+                        d.y += d.v * dt * 60; d.x -= d.v * dt * 12;
+                        if (d.y > h) { d.y = -20; d.x = rand(0, w + 40); }
+                    });
+                } },
+            { name: 'Космос', re: /космос|space|звезд|звёзд|галакт|warp/i,
+                init(w, h) { return { stars: Array.from({ length: 220 }, () => ({ x: rand(-1, 1), y: rand(-1, 1), z: rand(0.05, 1) })) }; },
+                draw(s, c, w, h, t, dt) {
+                    c.fillStyle = 'rgba(2,2,10,0.3)'; c.fillRect(0, 0, w, h);
+                    const cx = w / 2, cy = h / 2;
+                    s.stars.forEach((st, i) => {
+                        const pz = st.z; st.z -= dt * 0.45;
+                        if (st.z <= 0.02) { st.x = rand(-1, 1); st.y = rand(-1, 1); st.z = 1; return; }
+                        const x = cx + st.x / st.z * w * 0.25, y = cy + st.y / st.z * h * 0.25;
+                        const px = cx + st.x / pz * w * 0.25, py = cy + st.y / pz * h * 0.25;
+                        c.strokeStyle = i % 4 === 0 ? '#bd00ff' : '#ffffff'; c.globalAlpha = clamp(1 - st.z, 0.2, 1);
+                        c.lineWidth = (1 - st.z) * 2.2 + 0.3;
+                        c.beginPath(); c.moveTo(px, py); c.lineTo(x, y); c.stroke();
+                    });
+                    c.globalAlpha = 1;
+                } },
+            { name: 'Огонь', re: /огонь|огн|fire|костер|костёр|пламя/i,
+                init() { return { p: [] }; },
+                draw(s, c, w, h, t, dt) {
+                    c.globalCompositeOperation = 'source-over';
+                    c.fillStyle = 'rgba(8,2,2,0.3)'; c.fillRect(0, 0, w, h);
+                    for (let i = 0; i < 6; i++) s.p.push({ x: w / 2 + rand(-40, 40), y: h - 10, vx: rand(-0.6, 0.6), vy: rand(-3.2, -1.6), life: 1, r: rand(8, 20) });
+                    c.globalCompositeOperation = 'lighter';
+                    s.p = s.p.filter(p => p.life > 0);
+                    s.p.forEach(p => {
+                        p.x += p.vx + Math.sin(t * 4 + p.y * 0.05) * 0.4; p.y += p.vy * dt * 60; p.life -= dt * 0.7; p.r *= 0.985;
+                        const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+                        g.addColorStop(0, `rgba(255,${Math.floor(200 * p.life)},40,${p.life})`);
+                        g.addColorStop(1, 'rgba(255,40,0,0)');
+                        c.fillStyle = g; c.beginPath(); c.arc(p.x, p.y, p.r, 0, Math.PI * 2); c.fill();
+                    });
+                    c.globalCompositeOperation = 'source-over';
+                } },
+            { name: 'Океан', re: /океан|волн|море|ocean|wave|sea/i,
+                init() { return {}; },
+                draw(s, c, w, h, t) {
+                    const sky = c.createLinearGradient(0, 0, 0, h);
+                    sky.addColorStop(0, '#1a0033'); sky.addColorStop(0.5, '#ff007f'); sky.addColorStop(1, '#ffb000');
+                    c.fillStyle = sky; c.fillRect(0, 0, w, h);
+                    c.fillStyle = '#ffe9a8'; c.beginPath(); c.arc(w * 0.5, h * 0.5, 36, 0, Math.PI * 2); c.fill();
+                    const cols = ['#0a2a5a', '#0b3b7a', '#0d4f9a', '#106bb8'];
+                    cols.forEach((col, k) => {
+                        const base = h * (0.55 + k * 0.1);
+                        c.fillStyle = col; c.beginPath(); c.moveTo(0, h);
+                        for (let x = 0; x <= w; x += 6) c.lineTo(x, base + Math.sin(x * 0.02 + t * (1 + k * 0.4) + k) * (8 + k * 3));
+                        c.lineTo(w, h); c.closePath(); c.fill();
+                    });
+                } },
+            { name: 'Орбиты', re: /./,
+                init() { return {}; },
+                draw(s, c, w, h, t) {
+                    c.fillStyle = 'rgba(4,4,8,0.2)'; c.fillRect(0, 0, w, h);
+                    const cx = w / 2, cy = h / 2;
+                    for (let i = 0; i < 40; i++) {
+                        const a = i * 0.3 + t, d = 30 + Math.sin(t + i) * 40 + i * 2;
+                        c.beginPath(); c.arc(cx + Math.cos(a) * d, cy + Math.sin(a) * d, (Math.sin(t + i) + 2) * 2, 0, Math.PI * 2);
+                        c.fillStyle = i % 2 === 0 ? '#ff007f' : '#00e5ff'; c.shadowBlur = 10; c.shadowColor = c.fillStyle; c.fill();
+                    }
+                    c.shadowBlur = 0;
+                } }
+        ];
+
+        function recordCanvas(cvs, seconds, btn) {
+            if (!window.MediaRecorder || !cvs.captureStream) { toast('Запись не поддерживается этим браузером'); return; }
+            const mime = ['video/webm;codecs=vp9', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m));
+            const rec = new MediaRecorder(cvs.captureStream(30), mime ? { mimeType: mime } : undefined);
+            const chunks = [];
+            rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+            rec.onstop = () => { download('nexusmind-video.webm', new Blob(chunks, { type: 'video/webm' })); btn.disabled = false; btn.textContent = '⏺ Записать 5с'; };
+            rec.start();
+            btn.disabled = true;
+            let left = seconds;
+            btn.textContent = `Запись… ${left}с`;
+            const iv = setInterval(() => { left--; btn.textContent = `Запись… ${left}с`; if (left <= 0) clearInterval(iv); }, 1000);
+            setTimeout(() => rec.state !== 'inactive' && rec.stop(), seconds * 1000);
+        }
+
+        function generateVideo(prompt) {
+            const scene = SCENES.find(s => s.re.test(prompt));
+            const body = appendAiMessage(`
+                <p class="mb-2"><strong>🎬 Видео-сцена (${escapeHtml(scene.name)}):</strong> <em>${escapeHtml(prompt)}</em></p>
+                <canvas class="vid w-full h-64 bg-black rounded-xl border border-cyber-neonPink shadow-neon-purple"></canvas>
+                <div class="mt-2 flex flex-wrap gap-2 items-center">
+                    <button type="button" class="mini-btn b-pause">⏸ Пауза</button>
+                    <button type="button" class="mini-btn b-rec">⏺ Записать 5с</button>
+                    <span class="text-[10px] text-slate-500 font-code">Это процедурная анимация, не нейро-видео</span>
+                </div>`);
+            const cvs = body.querySelector('canvas.vid');
+            const w = cvs.clientWidth || 640, h = cvs.clientHeight || 256;
+            cvs.width = w; cvs.height = h;
+            const c = cvs.getContext('2d');
+            c.fillStyle = '#040408'; c.fillRect(0, 0, w, h);
+            const state = scene.init(w, h);
+            let paused = false, t = 0, lastTs = performance.now();
+
+            body.querySelector('.b-pause').addEventListener('click', e => { paused = !paused; e.target.textContent = paused ? '▶ Продолжить' : '⏸ Пауза'; });
+            body.querySelector('.b-rec').addEventListener('click', e => recordCanvas(cvs, 5, e.target));
+
+            (function frame(ts) {
+                if (!cvs.isConnected) return;
+                requestAnimationFrame(frame);
+                const dt = Math.min((ts - lastTs) / 1000, 0.05) * parameters.speed / 1.5;
+                lastTs = ts;
+                if (paused) return;
+                t += dt;
+                scene.draw(state, c, w, h, t, dt);
+            })(performance.now());
+            playTone(950, 'sawtooth', 0.2);
+        }
+
+        /* ================= Submit ================= */
+        async function handleChatSubmit(e) {
+            e.preventDefault();
+            if (busy) { if (currentAbort) currentAbort.abort(); return; }
+            const input = $('chatInput');
+            const prompt = input.value.trim();
+            if (!prompt) return;
+
+            appendUserMessage(prompt);
+            input.value = ''; autoGrow();
+            playTone(700, 'sine', 0.1);
+
+            const m = prompt.match(/^\/(image|3d|video|code)(?:\s+([\s\S]*))?$/i);
+            const cmd = m ? m[1].toLowerCase() : null;
+            const arg = m && m[2] ? m[2].trim() : '';
+
+            if (cmd && !arg) { appendAiMessage(`После <code class="inline-code">/${cmd}</code> нужно описание. Например: <code class="inline-code">/${cmd} ${cmd === '3d' ? 'ракета' : cmd === 'video' ? 'космос' : cmd === 'code' ? 'калькулятор на JS' : 'неоновый город'}</code>`); return; }
+
+            setBusy(true);
+            try {
+                if (cmd === 'image') await generateImage(arg);
+                else if (cmd === '3d') { generate3DModel(arg); setStatus('ready'); }
+                else if (cmd === 'video') { generateVideo(arg); setStatus('ready'); }
+                else if (cmd === 'code') await generateTextResponse('Напиши подробный, чистый и рабочий код для следующей задачи: ' + arg);
+                else await generateTextResponse(prompt);
+            } catch (err) {
+                appendAiMessage('⚠️ <b>Ошибка:</b> ' + escapeHtml(err.message));
+                setStatus('error');
+            } finally {
+                setBusy(false);
+                if (!$('aiStatusBadge').textContent.includes('ОШИБКА')) setStatus('ready');
+            }
+        }
+        $('chatForm').addEventListener('submit', handleChatSubmit);
+
+        function autoGrow() {
+            const el = $('chatInput');
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+        }
+        $('chatInput').addEventListener('input', autoGrow);
+        $('chatInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('chatForm').requestSubmit(); }
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) && currentTab === 'chat') { e.preventDefault(); $('chatInput').focus(); }
+        });
+
+        /* ================= Neural background ================= */
+        const bg = $('neuralCanvas');
+        const bgx = bg.getContext('2d');
+        let bw = 0, bh = 0, particles = [];
+        function resizeBg() { bw = bg.width = window.innerWidth; bh = bg.height = window.innerHeight; }
+        window.addEventListener('resize', resizeBg);
+        resizeBg();
+        const PCOUNT = window.innerWidth < 700 ? 28 : 60;
+        for (let i = 0; i < PCOUNT; i++) particles.push({ x: rand(0, bw), y: rand(0, bh), vx: rand(-0.6, 0.6), vy: rand(-0.6, 0.6), r: rand(1, 3), c: Math.random() > 0.5 ? '#00ffcc' : '#bd00ff' });
+
+        function drawBg() {
+            bgx.clearRect(0, 0, bw, bh);
+            const L2 = 140 * 140;
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                for (let j = i + 1; j < particles.length; j++) {
+                    const q = particles[j], dx = p.x - q.x, dy = p.y - q.y, d2 = dx * dx + dy * dy;
+                    if (d2 < L2) {
+                        bgx.strokeStyle = `rgba(0,255,204,${(1 - d2 / L2) * 0.25})`;
+                        bgx.lineWidth = 1; bgx.beginPath(); bgx.moveTo(p.x, p.y); bgx.lineTo(q.x, q.y); bgx.stroke();
+                    }
+                }
+            }
+            particles.forEach(p => { bgx.beginPath(); bgx.arc(p.x, p.y, p.r, 0, Math.PI * 2); bgx.fillStyle = p.c; bgx.fill(); });
+        }
+        function animateBg() {
+            if (!document.hidden) {
+                particles.forEach(p => {
+                    p.x += p.vx * parameters.speed; p.y += p.vy * parameters.speed;
+                    if (p.x < 0 || p.x > bw) p.vx *= -1;
+                    if (p.y < 0 || p.y > bh) p.vy *= -1;
+                });
+                drawBg();
+            }
+            requestAnimationFrame(animateBg);
+        }
+        if (reduceMotion) drawBg(); else animateBg();
+
+        /* ================= Network visualizer ================= */
+        const net = { nodes: [], edges: [], pulses: [], visited: new Set(), running: false, drag: null, w: 0, h: 0, dpr: 1, inited: false };
+        const mCanvas = $('matrixCanvas');
+        const mctx = mCanvas.getContext('2d');
+
+        function netResize() {
+            if (!mCanvas.clientWidth || !mCanvas.clientHeight) return;
+            net.dpr = Math.min(window.devicePixelRatio || 1, 2);
+            net.w = mCanvas.clientWidth; net.h = mCanvas.clientHeight;
+            mCanvas.width = net.w * net.dpr; mCanvas.height = net.h * net.dpr;
+            net.nodes.forEach(n => { n.x = clamp(n.x, 24, net.w - 24); n.y = clamp(n.y, 24, net.h - 40); });
+        }
+        function newNode(x, y) {
+            const i = net.nodes.length;
+            return { x: x != null ? x : rand(50, net.w - 50), y: y != null ? y : rand(50, net.h - 60), vx: rand(-0.25, 0.25), vy: rand(-0.25, 0.25), r: 14, label: `Нейрон-${i + 1}`, color: i % 2 === 0 ? '#00ffcc' : '#00e5ff', glow: 0 };
+        }
+        function rebuildEdges() {
+            const set = new Set(), n = net.nodes;
+            n.forEach((a, i) => {
+                n.map((b, j) => ({ j, d: (a.x - b.x) ** 2 + (a.y - b.y) ** 2 })).filter(o => o.j !== i).sort((p, q) => p.d - q.d).slice(0, 2)
+                    .forEach(o => set.add(Math.min(i, o.j) + '-' + Math.max(i, o.j)));
+            });
+            net.edges = [...set].map(s => s.split('-').map(Number));
+        }
+        function neighbors(i) { return net.edges.filter(e => e[0] === i || e[1] === i).map(e => (e[0] === i ? e[1] : e[0])); }
+        function spawnFrom(i) {
+            neighbors(i).forEach(j => { if (!net.visited.has(j)) { net.visited.add(j); net.pulses.push({ a: i, b: j, p: 0 }); } });
+        }
+        function startNetwork() {
+            netResize();
+            if (!net.inited) { for (let i = 0; i < 10; i++) net.nodes.push(newNode()); rebuildEdges(); net.inited = true; }
+            if (!net.running) { net.running = true; requestAnimationFrame(netLoop); }
+        }
+        function netLoop() {
+            if (currentTab !== 'matrix') { net.running = false; return; }
+            requestAnimationFrame(netLoop);
+            const dt = 1 / 60 * parameters.speed;
+            const c = mctx;
+            c.setTransform(net.dpr, 0, 0, net.dpr, 0, 0);
+            c.clearRect(0, 0, net.w, net.h);
+
+            net.nodes.forEach(n => {
+                if (net.drag === n) return;
+                n.x += n.vx * parameters.speed; n.y += n.vy * parameters.speed;
+                if (n.x < 24 || n.x > net.w - 24) n.vx *= -1;
+                if (n.y < 24 || n.y > net.h - 40) n.vy *= -1;
+                n.glow = Math.max(0, n.glow - 0.015);
+            });
+
+            c.lineWidth = 1.5;
+            net.edges.forEach(([i, j]) => {
+                const a = net.nodes[i], b = net.nodes[j]; if (!a || !b) return;
+                c.strokeStyle = 'rgba(70,70,130,0.7)'; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke();
+            });
+
+            for (let k = net.pulses.length - 1; k >= 0; k--) {
+                const p = net.pulses[k], a = net.nodes[p.a], b = net.nodes[p.b];
+                if (!a || !b) { net.pulses.splice(k, 1); continue; }
+                p.p += dt * 0.9;
+                if (p.p >= 1) { b.glow = 1; playTone(500 + p.b * 40, 'sine', 0.08); spawnFrom(p.b); net.pulses.splice(k, 1); continue; }
+                const x = a.x + (b.x - a.x) * p.p, y = a.y + (b.y - a.y) * p.p;
+                c.shadowBlur = 14; c.shadowColor = '#ff007f'; c.fillStyle = '#ff007f';
+                c.beginPath(); c.arc(x, y, 4, 0, Math.PI * 2); c.fill(); c.shadowBlur = 0;
+            }
+
+            net.nodes.forEach(n => {
+                const col = n.glow > 0 ? '#ff007f' : n.color;
+                c.shadowBlur = 15 + n.glow * 20; c.shadowColor = col; c.fillStyle = col;
+                c.beginPath(); c.arc(n.x, n.y, n.r + n.glow * 4, 0, Math.PI * 2); c.fill(); c.shadowBlur = 0;
+                c.fillStyle = '#ffffff'; c.font = '10px Orbitron, sans-serif'; c.textAlign = 'center';
+                c.fillText(n.label, n.x, n.y + n.r + 16);
+            });
+        }
+        function netPoint(e) { const r = mCanvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+        mCanvas.addEventListener('pointerdown', e => {
+            const p = netPoint(e);
+            const hit = net.nodes.slice().reverse().find(n => (n.x - p.x) ** 2 + (n.y - p.y) ** 2 <= (n.r + 8) ** 2);
+            if (hit) { net.drag = hit; mCanvas.setPointerCapture(e.pointerId); }
+        });
+        mCanvas.addEventListener('pointermove', e => {
+            if (!net.drag) return;
+            const p = netPoint(e);
+            net.drag.x = clamp(p.x, 20, net.w - 20); net.drag.y = clamp(p.y, 20, net.h - 30);
+        });
+        mCanvas.addEventListener('pointerup', () => { if (net.drag) { net.drag = null; rebuildEdges(); } });
+        mCanvas.addEventListener('dblclick', e => { const p = netPoint(e); net.nodes.push(newNode(p.x, p.y)); rebuildEdges(); playTone(800, 'sine', 0.1); });
+        new ResizeObserver(netResize).observe(mCanvas);
+
+        window.addRandomNode = function () { net.nodes.push(newNode()); rebuildEdges(); playTone(800, 'sine', 0.1); };
+        window.resetNetwork = function () { net.nodes = []; net.pulses = []; for (let i = 0; i < 10; i++) net.nodes.push(newNode()); rebuildEdges(); playTone(300, 'sawtooth', 0.2); };
+        window.runMatrixPropagation = function () {
+            if (!net.nodes.length) return;
+            playTone(1000, 'triangle', 0.25);
+            net.pulses = [];
+            const s = Math.floor(Math.random() * net.nodes.length);
+            net.visited = new Set([s]);
+            net.nodes[s].glow = 1;
+            spawnFrom(s);
+        };
+
+        /* ================= Init ================= */
+        $('modeDesc').textContent = MODES[aiMode].desc;
+        $('btnTabChat').className = TAB_ACTIVE_CHAT;
+        $('btnTabMatrix').className = TAB_IDLE;
+        setStatus('ready');
+        setBusy(false);
+        refreshHeaderModel();
+        lucide.createIcons();
+        refreshAudioUI();
+        restoreChat();
+        if (!settings.apiKey) setTimeout(() => toast('Добавьте API-ключ в «Настройках», чтобы включить чат'), 600);
+    })();
+    </script>
+</body>
+</html>
